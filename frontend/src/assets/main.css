@@ -1,0 +1,33 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --color-bg: #0f1117;
+  --color-surface: #181c27;
+  --color-surface2: #1e2336;
+  --color-border: #272d42;
+  --color-accent: #3d7fff;
+  --color-accent2: #00d4aa;
+  --color-accent3: #ff6b6b;
+  --color-accent4: #f59e0b;
+  --color-text: #e8ecf4;
+  --color-text2: #7c87a6;
+  --color-text3: #4a5270;
+  --sidebar-width: 220px;
+  --header-height: 56px;
+  --font: 'DM Sans', sans-serif;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+a {
+  text-decoration: none;
+}
