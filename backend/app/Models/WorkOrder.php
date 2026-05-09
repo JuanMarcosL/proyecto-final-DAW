@@ -36,4 +36,9 @@ class WorkOrder extends Model
     {
         return $this->hasMany(Appointment::class);
     }
+
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
 }

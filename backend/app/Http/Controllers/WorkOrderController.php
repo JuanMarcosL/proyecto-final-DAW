@@ -10,7 +10,7 @@ class WorkOrderController extends Controller
     public function index()
     {
         return response()->json(
-            WorkOrder::with(['creator', 'lines', 'appointments.resource'])
+            WorkOrder::with(['creator', 'updater', 'lines', 'appointments.resource'])
                 ->orderBy('created_at', 'desc')
                 ->get()
         );
@@ -20,15 +20,16 @@ class WorkOrderController extends Controller
     {
         $request->validate([
             'title'       => 'required|string|max:255',
-            'type'        => 'required|in:corrective,preventive,urgent,routine',
-            'priority'    => 'required|in:low,medium,high',
-            'address'     => 'required|string',
+            'type'        => 'nullable|string',
+            'priority'    => 'required|in:low,medium,high,critical',
+            'address'     => 'nullable|string',
             'description' => 'nullable|string',
             'due_date'    => 'nullable|date',
         ]);
 
         $workOrder = WorkOrder::create([
             ...$request->only(['title', 'description', 'type', 'priority', 'address', 'due_date', 'latitude', 'longitude']),
+            'status'     => $request->input('status', 'open'),
             'created_by' => $request->user()->id,
         ]);
 
@@ -46,17 +47,19 @@ class WorkOrderController extends Controller
     {
         $request->validate([
             'title'       => 'sometimes|string|max:255',
-            'type'        => 'sometimes|in:corrective,preventive,urgent,routine',
-            'priority'    => 'sometimes|in:low,medium,high',
-            'status'      => 'sometimes|in:new,assigned,in_progress,completed,closed',
-            'address'     => 'sometimes|string',
+            'type'        => 'nullable|string',
+            'priority'    => 'sometimes|in:low,medium,high,critical',
+            'status' => 'nullable|in:open,in_progress,closed,cancelled',
+            'address'     => 'nullable|string',
             'description' => 'nullable|string',
             'due_date'    => 'nullable|date',
         ]);
 
-        $workOrder->update($request->all());
+        $workOrder->fill($request->all());
+        $workOrder->updated_by = auth('sanctum')->id();
+        $workOrder->save();
 
-        return response()->json($workOrder->load(['creator', 'lines', 'appointments.resource']));
+        return response()->json($workOrder->load(['creator', 'updater', 'lines', 'appointments.resource']));
     }
 
     public function destroy(WorkOrder $workOrder)

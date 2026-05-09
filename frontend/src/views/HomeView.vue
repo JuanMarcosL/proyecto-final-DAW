@@ -15,7 +15,7 @@
         </router-link>
         <router-link to="/work-orders" class="nav-item">
           <span class="nav-icon">📋</span>
-          <span>Work Orders</span>
+          <span>Órdenes de trabajo</span>
         </router-link>
         <router-link to="/calendar" class="nav-item">
           <span class="nav-icon">📅</span>
@@ -47,7 +47,7 @@
 
     <div class="main">
       <div class="content">
-        <p style="color: var(--color-text2)">Selecciona una opción del menú.</p>
+        <RouterView />
       </div>
     </div>
   </div>

@@ -12,14 +12,15 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->text('description')->nullable();
-            $table->enum('type', ['corrective', 'preventive', 'urgent', 'routine']);
-            $table->enum('priority', ['low', 'medium', 'high']);
-            $table->enum('status', ['new', 'assigned', 'in_progress', 'completed', 'closed'])->default('new');
-            $table->string('address');
+            $table->string('type')->nullable();
+            $table->string('priority')->default('low');
+            $table->string('status')->default('open');
+            $table->string('address')->nullable();
             $table->decimal('latitude', 10, 7)->nullable();
             $table->decimal('longitude', 10, 7)->nullable();
             $table->timestamp('due_date')->nullable();
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
+            $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
         });
     }
