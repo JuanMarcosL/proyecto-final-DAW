@@ -57,7 +57,7 @@
           <tr v-for="wo in filtered" :key="wo.id" class="wo-row">
             <td class="wo-id">{{ wo.id }}</td>
             <td class="wo-title-cell">
-              <span class="wo-title-text">{{ wo.title }}</span>
+              <router-link :to="`/work-orders/${wo.id}`" class="wo-title-link">{{ wo.title }}</router-link>
               <span v-if="wo.description" class="wo-desc">{{ wo.description }}</span>
             </td>
             <td>
@@ -96,7 +96,13 @@
           </div>
           <div class="form-group">
             <label>Descripción</label>
-            <textarea v-model="form.description" rows="3" placeholder="Detalles de la intervención..."></textarea>
+            <textarea v-model="form.description" rows="3"
+              placeholder="Agrega los detalles del trabajo a realizar"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Dirección</label>
+            <input ref="addressInput" v-model="form.address" type="text"
+              placeholder="Ej: Av. Principes de España, 5, Santa Cruz de Tenerife" autocomplete="off" />
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -150,7 +156,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { workOrdersService } from '../services/workorders'
 
 // State
@@ -158,6 +164,8 @@ const workOrders = ref([])
 const loading = ref(false)
 const search = ref('')
 const filterStatus = ref('')
+const addressInput = ref(null)
+let autocomplete = null
 
 // Modal
 const showModal = ref(false)
@@ -252,6 +260,28 @@ async function deleteWO() {
     saving.value = false
   }
 }
+
+function initAutocomplete() {
+  if (!addressInput.value || !window.google) return
+  autocomplete = new window.google.maps.places.Autocomplete(addressInput.value, {
+    types: ['address'],
+    fields: ['formatted_address', 'geometry']
+  })
+  autocomplete.addListener('place_changed', () => {
+    const place = autocomplete.getPlace()
+    form.value.address = place.formatted_address
+    form.value.latitude = place.geometry.location.lat()
+    form.value.longitude = place.geometry.location.lng()
+  })
+}
+
+// Inicializar autocomplete cuando se abre el modal
+watch(showModal, async (val) => {
+  if (val) {
+    await nextTick()
+    initAutocomplete()
+  }
+})
 
 // Helpers
 function statusLabel(s) {

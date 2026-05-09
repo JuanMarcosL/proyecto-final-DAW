@@ -483,4 +483,13 @@
   .form-row {
     flex-direction: column;
   }
+
+  .wo-title-link {
+    font-weight: 600;
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+  .wo-title-link:hover {
+    text-decoration: underline;
+  }
 }

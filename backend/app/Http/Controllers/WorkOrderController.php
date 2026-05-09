@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\WorkOrder;
 use Illuminate\Http\Request;
+use App\Models\Appointment;
 
 class WorkOrderController extends Controller
 {
@@ -30,6 +31,13 @@ class WorkOrderController extends Controller
         $workOrder = WorkOrder::create([
             ...$request->only(['title', 'description', 'type', 'priority', 'address', 'due_date', 'latitude', 'longitude']),
             'status'     => $request->input('status', 'open'),
+            'created_by' => $request->user()->id,
+        ]);
+
+        Appointment::create([
+            'work_order_id' => $workOrder->id,
+            'address' => $request->address,
+            'status' => 'draft',
             'created_by' => $request->user()->id,
         ]);
 

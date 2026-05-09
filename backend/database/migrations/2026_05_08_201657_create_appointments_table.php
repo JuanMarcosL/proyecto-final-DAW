@@ -11,10 +11,11 @@ return new class extends Migration
         Schema::create('appointments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('work_order_id')->constrained()->onDelete('cascade');
-            $table->foreignId('resource_id')->constrained()->onDelete('cascade');
-            $table->timestamp('scheduled_start');
-            $table->timestamp('scheduled_end');
-            $table->enum('status', ['scheduled', 'in_progress', 'completed', 'cancelled'])->default('scheduled');
+            $table->foreignId('resource_id')->nullable()->constrained()->onDelete('set null');
+            $table->timestamp('scheduled_start')->nullable();
+            $table->timestamp('scheduled_end')->nullable();
+            $table->enum('status', ['draft', 'scheduled', 'in_progress', 'completed', 'cancelled'])->default('draft');
+            $table->string('address')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
         });

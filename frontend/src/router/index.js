@@ -3,6 +3,7 @@ import { useAuthStore } from '../stores/auth'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import WorkOrdersView from '../views/WorkOrdersView.vue'
+import WorkOrderDetailView from '../views/WorkOrderDetailView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,6 +27,11 @@ const router = createRouter({
           path: 'work-orders',
           name: 'work-orders',
           component: WorkOrdersView,
+        },
+        {
+          path: 'work-orders/:id',
+          name: 'work-order-detail',
+          component: WorkOrderDetailView,
         },
       ],
     },
