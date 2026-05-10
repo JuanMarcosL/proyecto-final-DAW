@@ -13,6 +13,13 @@ const router = createRouter({
       name: 'login',
       component: LoginView,
     },
+
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: () => import('../views/ResetPasswordView.vue'),
+    },
+
     {
       path: '/',
       component: HomeView,
@@ -53,6 +60,11 @@ const router = createRouter({
           name: 'reports',
           component: () => import('../views/ReportsView.vue'),
         },
+        {
+          path: 'users',
+          name: 'users',
+          component: () => import('../views/UsersView.vue'),
+        },
       ],
     },
   ],
@@ -60,7 +72,9 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const auth = useAuthStore()
-  if (to.meta.requiresAuth && !auth.isAuthenticated()) {
+  if (to.name === 'reset-password') {
+    next()
+  } else if (to.meta.requiresAuth && !auth.isAuthenticated()) {
     next('/login')
   } else {
     next()

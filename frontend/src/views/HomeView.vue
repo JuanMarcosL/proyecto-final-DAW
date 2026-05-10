@@ -9,7 +9,7 @@
       </div>
 
       <nav class="nav">
-        <router-link to="/" class="nav-item">
+        <router-link v-if="auth.user?.role !== 'tecnico'" to="/" class="nav-item">
           <span class="nav-icon">▦</span>
           <span>Dashboard</span>
         </router-link>
@@ -21,7 +21,7 @@
           <span class="nav-icon">📅</span>
           <span>Calendario</span>
         </router-link>
-        <router-link to="/resources" class="nav-item">
+        <router-link v-if="auth.user?.role !== 'tecnico'" to="/resources" class="nav-item">
           <span class="nav-icon">👷</span>
           <span>Técnicos</span>
         </router-link>
@@ -29,9 +29,13 @@
           <span class="nav-icon">🏖️</span>
           <span>Ausencias</span>
         </router-link>
-        <router-link to="/reports" class="nav-item">
+        <router-link v-if="auth.user?.role !== 'tecnico'" to="/reports" class="nav-item">
           <span class="nav-icon">📊</span>
           <span>Reportes</span>
+        </router-link>
+        <router-link v-if="auth.user?.role !== 'tecnico'" to="/users" class="nav-item">
+          <span class="nav-icon">👥</span>
+          <span>Usuarios</span>
         </router-link>
       </nav>
 
@@ -39,7 +43,7 @@
         <div class="user-avatar">{{ userInitials }}</div>
         <div>
           <div class="user-name">{{ auth.user?.name }}</div>
-          <div class="user-role">Dispatcher</div>
+          <div class="user-role">{{ roleLabel(auth.user?.role) }}</div>
         </div>
         <button class="logout-btn" @click="handleLogout">↩</button>
       </div>
@@ -69,5 +73,9 @@ const userInitials = computed(() => {
 async function handleLogout() {
   auth.logout()
   router.push('/login')
+}
+
+function roleLabel(role) {
+  return { admin: 'Administrador', supervisor: 'Supervisor', tecnico: 'Técnico' }[role] || role
 }
 </script>

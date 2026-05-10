@@ -43,5 +43,16 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = JSON.parse(localStorage.getItem('user'))
   }
 
-  return { user, token, login, logout, fetchMe, isAuthenticated, isAdmin, isSupervisor, isTecnico, canDispatch }
+  return {
+    user,
+    token,
+    login,
+    logout,
+    fetchMe,
+    isAuthenticated,
+    isAdmin,
+    isSupervisor,
+    isTecnico,
+    canDispatch,
+  }
 })

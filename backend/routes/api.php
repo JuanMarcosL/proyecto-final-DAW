@@ -8,6 +8,10 @@ use App\Http\Controllers\AbsenceController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -39,9 +43,56 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('absences', [AbsenceController::class, 'index']);
     Route::get('absences/{absence}', [AbsenceController::class, 'show']);
     Route::post('absences', [AbsenceController::class, 'store']);
-    Route::put('absences/{absence}', [AbsenceController::class, 'update'])->middleware('role:admin,supervisor');
-    Route::patch('absences/{absence}', [AbsenceController::class, 'update'])->middleware('role:admin,supervisor');
-    Route::delete('absences/{absence}', [AbsenceController::class, 'destroy'])->middleware('role:admin,supervisor');
+    Route::put('absences/{absence}', [AbsenceController::class, 'update']);
+    Route::patch('absences/{absence}', [AbsenceController::class, 'update']);
+    Route::delete('absences/{absence}', [AbsenceController::class, 'destroy']);
+
+    // Users
+    Route::get('users', [UserController::class, 'index'])->middleware('role:admin,supervisor');
+    Route::post('users', [UserController::class, 'store'])->middleware('role:admin,supervisor');
+    Route::put('users/{user}', [UserController::class, 'update'])->middleware('role:admin,supervisor');
+    Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('role:admin');
+
+    Route::get('reports', [ReportController::class, 'index'])->middleware('role:admin,supervisor');
+
+    Route::get('my-resource', function (\Illuminate\Http\Request $request) {
+        $user = $request->user();
+        logger('my-resource user_id: ' . $user->id);
+        $resource = \App\Models\Resource::with('user')
+            ->where('user_id', $user->id)
+            ->first();
+        logger('my-resource result: ' . json_encode($resource));
+        return response()->json($resource);
+    });
 });
 
-Route::get('reports', [ReportController::class, 'index']);
+Route::post('/reset-password', function (\Illuminate\Http\Request $request) {
+    $request->validate([
+        'token'    => 'required',
+        'email'    => 'required|email',
+        'password' => 'required|min:6|confirmed',
+    ]);
+
+    $status = Password::reset(
+        $request->only('email', 'password', 'password_confirmation', 'token'),
+        function ($user, $password) {
+            $user->forceFill(['password' => Hash::make($password)])->save();
+        }
+    );
+
+    if ($status === Password::PASSWORD_RESET) {
+        return response()->json(['message' => 'Contraseña actualizada correctamente.']);
+    }
+
+    return response()->json(['message' => 'El enlace no es válido o ha expirado.'], 422);
+});
+
+Route::post('/forgot-password', function (\Illuminate\Http\Request $request) {
+    $request->validate(['email' => 'required|email']);
+
+    $status = Password::sendResetLink($request->only('email'));
+
+    return response()->json([
+        'message' => 'Si el email existe, recibirás un enlace para restablecer tu contraseña.'
+    ]);
+});

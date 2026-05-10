@@ -7,7 +7,9 @@
         <h1 class="absences-title">Ausencias</h1>
         <span class="absences-count">{{ absences.length }} registros</span>
       </div>
-      <button class="btn-new" @click="openModal()">+ Nueva ausencia</button>
+      <button class="btn-new" @click="openModal()" :disabled="isTecnico && !myResource">
+  + Nueva ausencia
+</button>
     </div>
 
     <!-- Filters -->
@@ -67,12 +69,20 @@
             <td><span :class="['badge', `badge--abs-${a.status}`]">{{ statusLabel(a.status) }}</span></td>
             <td>{{ a.resolver?.name || '-' }}</td>
             <td class="abs-actions">
-              <template v-if="a.status === 'pending' && canApprove">
-                <button class="btn-approve" @click="resolve(a, 'approved')" title="Aprobar">✓</button>
-                <button class="btn-reject" @click="resolve(a, 'rejected')" title="Rechazar">✗</button>
-                <button class="btn-icon" @click="openEditModal(a)" title="Editar">✏️</button>
+              <template v-if="!isTecnico">
+                <template v-if="a.status === 'pending' && canApprove">
+                  <button class="btn-approve" @click="resolve(a, 'approved')" title="Aprobar">✓</button>
+                  <button class="btn-reject" @click="resolve(a, 'rejected')" title="Rechazar">✗</button>
+                  <button class="btn-icon" @click="openEditModal(a)" title="Editar">✏️</button>
+                </template>
+                <button class="btn-icon btn-icon--delete" @click="confirmDelete(a)" title="Eliminar">🗑️</button>
               </template>
-              <button v-if="canApprove" class="btn-icon btn-icon--delete" @click="confirmDelete(a)" title="Eliminar">🗑️</button>
+              <template v-else>
+                <template v-if="a.status === 'pending'">
+                  <button class="btn-icon" @click="openEditModal(a)" title="Editar">✏️</button>
+                  <button class="btn-icon btn-icon--delete" @click="confirmDelete(a)" title="Eliminar">🗑️</button>
+                </template>
+              </template>
             </td>
           </tr>
         </tbody>
@@ -87,7 +97,7 @@
           <button class="modal__close" @click="showModal = false">×</button>
         </div>
         <form class="modal__form" @submit.prevent="saveAbsence">
-          <div class="form-group">
+          <div class="form-group" v-if="!isTecnico">
             <label>Técnico</label>
             <select v-model="form.resource_id" required :disabled="!!editingAbsence">
               <option value="">Selecciona un técnico</option>
@@ -106,11 +116,12 @@
           <div class="form-row">
             <div class="form-group">
               <label>Desde</label>
-              <input v-model="form.start_date" type="date" required />
+              <input v-model="form.start_date" type="date" required :min="isTecnico ? today : undefined" />
             </div>
             <div class="form-group">
               <label>Hasta</label>
-              <input v-model="form.end_date" type="date" required />
+              <input v-model="form.end_date" type="date" required
+                :min="isTecnico ? (form.start_date || today) : undefined" />
             </div>
           </div>
           <div class="form-group">
@@ -133,10 +144,13 @@
           <h2>Eliminar ausencia</h2>
           <button class="modal__close" @click="showDeleteModal = false">×</button>
         </div>
-        <p class="delete-msg">¿Seguro que quieres eliminar esta ausencia de <strong>{{ deletingAbsence?.resource?.user?.name }}</strong>?</p>
+        <p class="delete-msg">¿Seguro que quieres eliminar esta ausencia de <strong>{{
+          deletingAbsence?.resource?.user?.name
+            }}</strong>?</p>
         <div class="modal__footer">
           <button class="btn-cancel" @click="showDeleteModal = false">Cancelar</button>
-          <button class="btn-delete" :disabled="saving" @click="deleteAbsence">{{ saving ? 'Eliminando...' : 'Eliminar' }}</button>
+          <button class="btn-delete" :disabled="saving" @click="deleteAbsence">{{ saving ? 'Eliminando...' : 'Eliminar'
+          }}</button>
         </div>
       </div>
     </div>
@@ -165,13 +179,33 @@ const editingAbsence = ref(null)
 
 const showDeleteModal = ref(false)
 const deletingAbsence = ref(null)
+const today = new Date().toISOString().split('T')[0]
 
 const canApprove = ref(false)
+
+const isTecnico = computed(() => auth.user?.role === 'tecnico')
+const myResource = ref(null)
 
 onMounted(async () => {
   await auth.fetchMe()
   canApprove.value = ['admin', 'supervisor'].includes(auth.user?.role)
-  await Promise.all([fetchAbsences(), fetchResources()])
+
+  if (auth.user?.role === 'tecnico') {
+    let intentos = 0
+    while (!myResource.value?.id && intentos < 3) {
+      try {
+        const res = await api.get('/my-resource')
+        myResource.value = res.data
+      } catch (e) {
+        console.error('Error cargando my-resource:', e)
+      }
+      intentos++
+      if (!myResource.value?.id) await new Promise(r => setTimeout(r, 500))
+    }
+    await fetchAbsences()
+  } else {
+    await Promise.all([fetchAbsences(), fetchResources()])
+  }
 })
 
 function defaultForm() {
@@ -208,8 +242,12 @@ async function fetchResources() {
 }
 
 function openModal() {
+  console.log('myResource al abrir modal:', myResource.value)
   editingAbsence.value = null
   form.value = defaultForm()
+  if (isTecnico.value && myResource.value) {
+    form.value.resource_id = myResource.value.id
+  }
   formError.value = ''
   showModal.value = true
 }
@@ -228,6 +266,7 @@ function openEditModal(a) {
 }
 
 async function saveAbsence() {
+  console.log('form al guardar:', form.value)
   saving.value = true
   formError.value = ''
   try {
@@ -293,6 +332,7 @@ function typeLabel(t) {
 function statusLabel(s) {
   return { pending: 'Pendiente', approved: 'Aprobada', rejected: 'Rechazada' }[s] || s
 }
+
 </script>
 
 <style scoped>

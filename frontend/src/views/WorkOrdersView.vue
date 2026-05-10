@@ -7,7 +7,7 @@
         <h1 class="wo-title">Órdenes de Trabajo</h1>
         <span class="wo-count">{{ workOrders.length }} registros</span>
       </div>
-      <button class="btn-new" @click="openModal()">
+      <button v-if="canDispatch" class="btn-new" @click="openModal()">
         <span class="btn-new__icon">+</span>
         Nueva OT
       </button>
@@ -34,8 +34,9 @@
     <!-- Empty -->
     <div v-else-if="filtered.length === 0" class="wo-empty">
       <div class="wo-empty__icon">📋</div>
-      <p>No hay órdenes de trabajo</p>
-      <button class="btn-new" @click="openModal()">Crear la primera</button>
+      <p v-if="canDispatch">No hay órdenes de trabajo</p>
+      <p v-else>No hay órdenes de trabajo donde usted haya sido asignado</p>
+      <button v-if="canDispatch" class="btn-new" @click="openModal()">Crear la primera</button>
     </div>
 
     <!-- Table -->
@@ -74,8 +75,8 @@
             <td>{{ wo.creator?.name || '-' }}</td>
             <td>{{ wo.updater?.name || '-' }}</td>
             <td class="wo-actions">
-              <button class="btn-icon btn-icon--edit" @click="openModal(wo)" title="Editar">✏️</button>
-              <button class="btn-icon btn-icon--delete" @click="confirmDelete(wo)" title="Eliminar">🗑️</button>
+              <button v-if="canDispatch" class="btn-icon btn-icon--edit" @click="openModal(wo)">✏️</button>
+              <button v-if="canDispatch" class="btn-icon btn-icon--delete" @click="confirmDelete(wo)">🗑️</button>
             </td>
           </tr>
         </tbody>
@@ -158,7 +159,7 @@
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { workOrdersService } from '../services/workorders'
-
+import { useAuthStore } from '../stores/auth'
 // State
 const workOrders = ref([])
 const loading = ref(false)
@@ -166,6 +167,8 @@ const search = ref('')
 const filterStatus = ref('')
 const addressInput = ref(null)
 let autocomplete = null
+const auth = useAuthStore()
+const canDispatch = computed(() => ['admin', 'supervisor'].includes(auth.user?.role))
 
 // Modal
 const showModal = ref(false)

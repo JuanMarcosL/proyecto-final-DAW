@@ -8,15 +8,28 @@ use App\Models\Appointment;
 
 class WorkOrderController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $user = $request->user();
+
+        if ($user->role === 'tecnico') {
+            $resource = \App\Models\Resource::where('user_id', $user->id)->first();
+            if (!$resource) return response()->json([]);
+
+            return response()->json(
+                WorkOrder::with(['creator', 'updater'])
+                    ->whereHas('appointments', fn($q) => $q->where('resource_id', $resource->id))
+                    ->orderBy('created_at', 'desc')
+                    ->get()
+            );
+        }
+
         return response()->json(
-            WorkOrder::with(['creator', 'updater', 'lines', 'appointments.resource'])
+            WorkOrder::with(['creator', 'updater'])
                 ->orderBy('created_at', 'desc')
                 ->get()
         );
     }
-
     public function store(Request $request)
     {
         $request->validate([

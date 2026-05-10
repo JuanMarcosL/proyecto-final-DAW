@@ -8,8 +8,22 @@ use Illuminate\Http\Request;
 
 class AppointmentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $user = $request->user();
+
+        if ($user->role === 'tecnico') {
+            $resource = \App\Models\Resource::where('user_id', $user->id)->first();
+            if (!$resource) return response()->json([]);
+
+            return response()->json(
+                Appointment::with(['workOrder', 'resource.user'])
+                    ->where('resource_id', $resource->id)
+                    ->orderBy('scheduled_start', 'asc')
+                    ->get()
+            );
+        }
+
         return response()->json(
             Appointment::with(['workOrder', 'resource.user'])
                 ->orderBy('scheduled_start', 'asc')
