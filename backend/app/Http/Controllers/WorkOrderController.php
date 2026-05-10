@@ -47,7 +47,7 @@ class WorkOrderController extends Controller
     public function show(WorkOrder $workOrder)
     {
         return response()->json(
-            $workOrder->load(['creator', 'lines', 'appointments.resource'])
+            $workOrder->load(['creator', 'lines', 'appointments.resource.user'])
         );
     }
 

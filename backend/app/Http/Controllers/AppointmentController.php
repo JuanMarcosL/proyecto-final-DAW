@@ -44,6 +44,32 @@ class AppointmentController extends Controller
             }
         }
 
+        // Verificar que el técnico no tiene ausencia aprobada en ese periodo
+        if ($request->resource_id && $request->scheduled_start && $request->scheduled_end) {
+            $startDate = date('Y-m-d', strtotime($request->scheduled_start));
+            $endDate = date('Y-m-d', strtotime($request->scheduled_end));
+
+            $hasAbsence = \App\Models\Absence::where('resource_id', $request->resource_id)
+                ->where('status', 'approved')
+                ->where('start_date', '<=', $endDate)
+                ->where('end_date', '>=', $startDate)
+                ->exists();
+
+            if ($hasAbsence) {
+                return response()->json([
+                    'message' => 'El técnico tiene una ausencia aprobada en ese periodo.'
+                ], 422);
+            }
+        }
+
+        // Verificar que el técnico está activo
+        $resource = \App\Models\Resource::find($request->resource_id);
+        if ($resource && !$resource->active) {
+            return response()->json([
+                'message' => 'No se puede asignar una cita a un técnico inactivo.'
+            ], 422);
+        }
+
         $appointment = Appointment::create($request->only([
             'work_order_id',
             'resource_id',
@@ -67,11 +93,82 @@ class AppointmentController extends Controller
     public function update(Request $request, Appointment $appointment)
     {
         $request->validate([
-            'status' => 'sometimes|in:draft,scheduled,in_progress,completed,cancelled',
-            'notes'  => 'nullable|string',
+            'resource_id'     => 'nullable|exists:resources,id',
+            'scheduled_start' => 'nullable|date',
+            'scheduled_end'   => 'nullable|date|after:scheduled_start',
+            'status'          => 'sometimes|in:draft,scheduled,in_progress,completed,cancelled',
+            'notes'           => 'nullable|string',
+            'address'         => 'nullable|string',
         ]);
 
-        $appointment->update($request->all());
+        // No se puede cambiar estado de cita completada o cancelada
+        if (in_array($appointment->status, ['completed', 'cancelled'])) {
+            return response()->json([
+                'message' => 'No se puede modificar una cita completada o cancelada.'
+            ], 422);
+        }
+
+        // No se puede poner en scheduled sin fechas
+        $newStatus = $request->input('status', $appointment->status);
+        $newStart = $request->input('scheduled_start', $appointment->scheduled_start);
+        $newEnd = $request->input('scheduled_end', $appointment->scheduled_end);
+
+        if ($newStatus === 'scheduled' && (!$newStart || !$newEnd)) {
+            return response()->json([
+                'message' => 'Para programar una cita es necesario indicar fecha de inicio y fin.'
+            ], 422);
+        }
+
+        // Verificar overlap si hay técnico y fechas
+        $resourceId = $request->input('resource_id', $appointment->resource_id);
+        if ($resourceId && $newStart && $newEnd) {
+            $overlap = Appointment::where('resource_id', $resourceId)
+                ->where('id', '!=', $appointment->id)
+                ->where('status', '!=', 'cancelled')
+                ->where(function ($query) use ($newStart, $newEnd) {
+                    $query->whereBetween('scheduled_start', [$newStart, $newEnd])
+                        ->orWhereBetween('scheduled_end', [$newStart, $newEnd]);
+                })->exists();
+
+            if ($overlap) {
+                return response()->json([
+                    'message' => 'El técnico ya tiene una cita en ese horario.'
+                ], 422);
+            }
+
+            // Verificar ausencias aprobadas
+            $startDate = date('Y-m-d', strtotime($newStart));
+            $endDate = date('Y-m-d', strtotime($newEnd));
+
+            $hasAbsence = \App\Models\Absence::where('resource_id', $resourceId)
+                ->where('status', 'approved')
+                ->where('start_date', '<=', $endDate)
+                ->where('end_date', '>=', $startDate)
+                ->exists();
+
+            if ($hasAbsence) {
+                return response()->json([
+                    'message' => 'El técnico tiene una ausencia aprobada en ese periodo.'
+                ], 422);
+            }
+        }
+
+        // Verificar que el técnico está activo
+        $resource = \App\Models\Resource::find($resourceId);
+        if ($resource && !$resource->active) {
+            return response()->json([
+                'message' => 'No se puede asignar una cita a un técnico inactivo.'
+            ], 422);
+        }
+
+        $appointment->update($request->only([
+            'resource_id',
+            'scheduled_start',
+            'scheduled_end',
+            'status',
+            'notes',
+            'address'
+        ]));
 
         return response()->json($appointment->load(['workOrder', 'resource.user']));
     }

@@ -43,6 +43,11 @@ const router = createRouter({
           name: 'absences',
           component: () => import('../views/AbsencesView.vue'),
         },
+        {
+          path: 'calendar',
+          name: 'calendar',
+          component: () => import('../views/CalendarView.vue'),
+        },
       ],
     },
   ],
