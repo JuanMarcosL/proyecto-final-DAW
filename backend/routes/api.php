@@ -7,6 +7,7 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AbsenceController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ReportController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -42,3 +43,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('absences/{absence}', [AbsenceController::class, 'update'])->middleware('role:admin,supervisor');
     Route::delete('absences/{absence}', [AbsenceController::class, 'destroy'])->middleware('role:admin,supervisor');
 });
+
+Route::get('reports', [ReportController::class, 'index']);

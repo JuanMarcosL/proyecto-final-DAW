@@ -2,7 +2,15 @@
   <div class="dashboard">
     <div class="dashboard-header">
       <h1 class="dashboard-title">Dashboard</h1>
-      <span class="dashboard-date">{{ today }}</span>
+      <div class="dashboard-controls">
+        <select v-model="period" @change="loadData" class="period-select">
+          <option value="all">Histórico</option>
+          <option value="today">Hoy</option>
+          <option value="week">Esta semana</option>
+          <option value="month">Este mes</option>
+        </select>
+        <span class="dashboard-date">{{ today }}</span>
+      </div>
     </div>
 
     <div v-if="loading" class="dash-loading">
@@ -64,7 +72,7 @@
       <!-- Recent Work Orders -->
       <div class="dash-card">
         <div class="dash-card__header">
-          <h2>Órdenes recientes</h2>
+          <h2>Últimas ordenes creadas</h2>
           <router-link to="/work-orders" class="dash-link">Ver todas →</router-link>
         </div>
         <table class="dash-table">
@@ -75,7 +83,7 @@
               <th>Estado</th>
               <th>Prioridad</th>
               <th>Creada por</th>
-              <th>Fecha</th>
+              <th>Fecha de creación</th>
             </tr>
           </thead>
           <tbody>
@@ -85,7 +93,8 @@
                 <router-link :to="`/work-orders/${wo.id}`" class="dash-wo-link">{{ wo.title }}</router-link>
               </td>
               <td><span :class="['badge', `badge--${wo.status}`]">{{ statusLabel(wo.status) }}</span></td>
-              <td><span :class="['badge', `badge--priority-${wo.priority}`]">{{ priorityLabel(wo.priority) }}</span></td>
+              <td><span :class="['badge', `badge--priority-${wo.priority}`]">{{ priorityLabel(wo.priority) }}</span>
+              </td>
               <td>{{ wo.creator?.name || '-' }}</td>
               <td>{{ formatDate(wo.created_at) }}</td>
             </tr>
@@ -102,20 +111,23 @@ import api from '../services/api'
 
 const loading = ref(false)
 const data = ref({})
+const period = ref('all')
 
 const today = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
-onMounted(async () => {
+async function loadData() {
   loading.value = true
   try {
-    const res = await api.get('/dashboard')
+    const res = await api.get('/dashboard', { params: { period: period.value } })
     data.value = res.data
   } catch (e) {
     console.error('Error cargando dashboard', e)
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(loadData)
 
 function statusLabel(s) {
   return { open: 'Abierta', in_progress: 'En progreso', closed: 'Cerrada', cancelled: 'Cancelada' }[s] || s
