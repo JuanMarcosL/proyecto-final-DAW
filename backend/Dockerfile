@@ -12,7 +12,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www
 
 # Copiar archivos
-COPY . .
+COPY backend/ .
 
 # Instalar dependencias PHP
 RUN composer install --optimize-autoloader --no-dev
