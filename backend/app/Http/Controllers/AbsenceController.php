@@ -27,7 +27,11 @@ class AbsenceController extends Controller
         ]);
 
         $absence = Absence::create($request->only([
-            'resource_id', 'type', 'start_date', 'end_date', 'reason'
+            'resource_id',
+            'type',
+            'start_date',
+            'end_date',
+            'reason'
         ]));
 
         return response()->json($absence->load('resource.user'), 201);
@@ -43,18 +47,25 @@ class AbsenceController extends Controller
     public function update(Request $request, Absence $absence)
     {
         $request->validate([
-            'status' => 'required|in:approved,rejected',
+            'status'     => 'sometimes|in:approved,rejected',
+            'type'       => 'sometimes|in:vacation,medical,personal,other',
+            'start_date' => 'sometimes|date',
+            'end_date'   => 'sometimes|date|after_or_equal:start_date',
+            'reason'     => 'nullable|string',
         ]);
 
-        $absence->update([
-            'status'      => $request->status,
-            'resolved_by' => $request->user()->id,
-            'resolved_at' => now(),
-        ]);
+        $data = $request->only(['type', 'start_date', 'end_date', 'reason']);
+
+        if ($request->has('status')) {
+            $data['status']      = $request->status;
+            $data['resolved_by'] = $request->user()->id;
+            $data['resolved_at'] = now();
+        }
+
+        $absence->update($data);
 
         return response()->json($absence->load(['resource.user', 'resolver']));
     }
-
     public function destroy(Absence $absence)
     {
         $absence->delete();

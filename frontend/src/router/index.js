@@ -33,6 +33,16 @@ const router = createRouter({
           name: 'work-order-detail',
           component: WorkOrderDetailView,
         },
+        {
+          path: 'resources',
+          name: 'resources',
+          component: () => import('../views/ResourcesView.vue'),
+        },
+        {
+          path: 'absences',
+          name: 'absences',
+          component: () => import('../views/AbsencesView.vue'),
+        },
       ],
     },
   ],

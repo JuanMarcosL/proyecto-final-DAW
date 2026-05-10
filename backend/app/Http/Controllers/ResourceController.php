@@ -10,7 +10,13 @@ class ResourceController extends Controller
     public function index()
     {
         return response()->json(
-            Resource::with(['user', 'appointments', 'absences'])
+            Resource::with([
+                'user',
+                'appointments' => function ($q) {
+                    $q->whereNotIn('status', ['completed', 'cancelled']);
+                },
+                'absences'
+            ])
                 ->orderBy('created_at', 'desc')
                 ->get()
         );
