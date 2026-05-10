@@ -6,6 +6,8 @@ return [
     'allowed_origins' => [
         'http://localhost:5173',
         'https://proyecto-final-daw-nine.vercel.app',
+        'https://fieldserviceapp.xyz',
+        'https://www.fieldserviceapp.xyz',
     ],
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],

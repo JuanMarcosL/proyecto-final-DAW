@@ -96,9 +96,3 @@ Route::post('/forgot-password', function (\Illuminate\Http\Request $request) {
         'message' => 'Si el email existe, recibirás un enlace para restablecer tu contraseña.'
     ]);
 });
-
-Route::get('/reset-admin', function () {
-    \App\Models\User::where('email', 'juanmarcosleon1990@gmail.com')
-        ->update(['password' => \Illuminate\Support\Facades\Hash::make('password123')]);
-    return response()->json(['message' => 'ok']);
-});
