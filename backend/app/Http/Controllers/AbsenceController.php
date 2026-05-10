@@ -48,6 +48,17 @@ class AbsenceController extends Controller
             'reason'
         ]));
 
+        // Notificar a supervisores y admins
+        $absence->load('resource.user');
+        $notificar = \App\Models\User::whereIn('role', ['admin', 'supervisor'])->get();
+        foreach ($notificar as $user) {
+            try {
+                $user->notify(new \App\Notifications\AbsenceRequestedNotification($absence));
+            } catch (\Exception $e) {
+                // silenciar error de email
+            }
+        }
+
         return response()->json($absence->load('resource.user'), 201);
     }
 

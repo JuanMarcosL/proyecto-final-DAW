@@ -48,6 +48,7 @@
             <th>Título</th>
             <th>Estado</th>
             <th>Prioridad</th>
+            <th>Citas</th>
             <th>Creada</th>
             <th>Creada por</th>
             <th>Último modificador</th>
@@ -71,6 +72,7 @@
                 {{ priorityLabel(wo.priority) }}
               </span>
             </td>
+            <td>{{ wo.appointments?.length || 0 }}</td>
             <td class="wo-date">{{ formatDate(wo.created_at) }}</td>
             <td>{{ wo.creator?.name || '-' }}</td>
             <td>{{ wo.updater?.name || '-' }}</td>

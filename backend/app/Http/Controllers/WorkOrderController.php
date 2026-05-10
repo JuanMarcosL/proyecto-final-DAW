@@ -25,7 +25,7 @@ class WorkOrderController extends Controller
         }
 
         return response()->json(
-            WorkOrder::with(['creator', 'updater'])
+            WorkOrder::with(['creator', 'updater', 'appointments'])
                 ->orderBy('created_at', 'desc')
                 ->get()
         );

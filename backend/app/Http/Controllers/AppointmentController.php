@@ -94,6 +94,18 @@ class AppointmentController extends Controller
             'status'
         ]));
 
+        // Notificar al técnico si la cita se crea en estado scheduled
+        if ($appointment->status === 'scheduled' && $appointment->resource_id) {
+            $resourceNotify = \App\Models\Resource::with('user')->find($appointment->resource_id);
+            if ($resourceNotify?->user) {
+                try {
+                    $resourceNotify->user->notify(new \App\Notifications\AppointmentAssignedNotification($appointment));
+                } catch (\Exception $e) {
+                    logger('Error enviando notificacion de cita: ' . $e->getMessage());
+                }
+            }
+        }
+
         return response()->json($appointment->load(['workOrder', 'resource.user']), 201);
     }
 
@@ -175,6 +187,9 @@ class AppointmentController extends Controller
             ], 422);
         }
 
+        // Guardar resource_id original antes del update
+        $originalResourceId = $appointment->resource_id;
+
         $appointment->update($request->only([
             'resource_id',
             'scheduled_start',
@@ -183,6 +198,25 @@ class AppointmentController extends Controller
             'notes',
             'address'
         ]));
+        logger('originalResourceId: ' . $originalResourceId);
+        logger('request resource_id: ' . $request->resource_id);
+        logger('has resource_id: ' . ($request->has('resource_id') ? 'si' : 'no'));
+
+        // Notificar al técnico si se le asigna uno nuevo
+        if ($request->has('resource_id') && $request->resource_id && $request->resource_id != $originalResourceId) {
+            $newStatusFinal = $request->input('status', $appointment->status);
+            if ($newStatusFinal === 'scheduled') {
+                $resourceNotify = \App\Models\Resource::with('user')->find($request->resource_id);
+                if ($resourceNotify?->user) {
+                    $appointment->load('workOrder');
+                    try {
+                        $resourceNotify->user->notify(new \App\Notifications\AppointmentAssignedNotification($appointment));
+                    } catch (\Exception $e) {
+                        logger('Error enviando notificacion de cita: ' . $e->getMessage());
+                    }
+                }
+            }
+        }
 
         return response()->json($appointment->load(['workOrder', 'resource.user']));
     }

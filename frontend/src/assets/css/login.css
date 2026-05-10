@@ -12,7 +12,7 @@
   border-radius: 12px;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .login-box h1 {
@@ -121,4 +121,59 @@
   color: var(--color-accent);
   text-decoration: none;
   font-size: 0.875rem;
+}
+
+.password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrap input {
+  flex: 1;
+  padding-right: 2.5rem;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 0.75rem;
+  background: none !important;
+  border: none !important;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 !important;
+  line-height: 1;
+  width: auto !important;
+  color: #000000 !important;
+}
+
+.toggle-password:hover {
+  color: var(--color-text) !important;
+}
+
+.login-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+.login-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.login-logo__icon {
+  font-size: 2.5rem;
+}
+
+.login-logo__text {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text);
 }
